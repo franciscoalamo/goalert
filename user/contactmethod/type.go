@@ -16,6 +16,7 @@ const (
 	TypeEmail   Type = "EMAIL"
 	TypePush    Type = "PUSH"
 	TypeWebhook Type = "WEBHOOK"
+	TypeNTFY    Type = "NTFY"
 	TypeSlackDM Type = "SLACK_DM"
 )
 

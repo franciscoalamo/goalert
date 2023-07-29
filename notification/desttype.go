@@ -44,6 +44,7 @@ const (
 	DestTypeUserEmail
 	DestTypeUserWebhook
 	DestTypeChanWebhook
+	DestTypeNTFY
 	DestTypeSlackUG
 )
 
@@ -72,6 +73,8 @@ func (t ScannableDestType) DestType() DestType {
 		return DestTypeUserEmail
 	case contactmethod.TypeWebhook:
 		return DestTypeUserWebhook
+	case contactmethod.TypeNTFY:
+		return DestTypeNTFY
 	case contactmethod.TypeSlackDM:
 		return DestTypeSlackDM
 	}

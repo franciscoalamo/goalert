@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/franciscoalamo/goalert/notification/ntfy"
 	"github.com/target/goalert/app/lifecycle"
 	"github.com/target/goalert/expflag"
 	"github.com/target/goalert/notification"
@@ -72,6 +73,7 @@ func (app *App) startup(ctx context.Context) error {
 	app.notificationManager.RegisterSender(notification.DestTypeUserEmail, "smtp", email.NewSender(ctx))
 	app.notificationManager.RegisterSender(notification.DestTypeUserWebhook, "webhook-user", webhook.NewSender(ctx))
 	app.notificationManager.RegisterSender(notification.DestTypeChanWebhook, "webhook-channel", webhook.NewSender(ctx))
+	app.notificationManager.RegisterSender(notification.DestTypeNTFY, "ntfy", ntfy.NewSender(ctx))
 
 	app.initStartup(ctx, "Startup.Engine", app.initEngine)
 	app.initStartup(ctx, "Startup.Auth", app.initAuth)
