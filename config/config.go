@@ -134,6 +134,7 @@ type Config struct {
 
 	NTFY struct {
 		Enable bool `public:"true" info:"Enables NTFY as a contact method."`
+		BaseURL string `public:"true" info:"Base URL for NTFY API. Example: https://ntfy.example.com"`
 	}
 
 	Feedback struct {

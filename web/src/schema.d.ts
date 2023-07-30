@@ -1082,6 +1082,7 @@ export type ContactMethodType =
   | 'VOICE'
   | 'EMAIL'
   | 'WEBHOOK'
+  | 'NTFY'
   | 'SLACK_DM'
 
 export interface UserContactMethod {
@@ -1210,5 +1211,7 @@ type ConfigID =
   | 'SMTP.Password'
   | 'Webhook.Enable'
   | 'Webhook.AllowedURLs'
+  | 'NTFY.Enable'
+  | 'NTFY.BaseURL'
   | 'Feedback.Enable'
   | 'Feedback.OverrideURL'

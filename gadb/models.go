@@ -665,6 +665,7 @@ const (
 	EnumUserContactMethodTypeVOICE   EnumUserContactMethodType = "VOICE"
 	EnumUserContactMethodTypeSMS     EnumUserContactMethodType = "SMS"
 	EnumUserContactMethodTypeWEBHOOK EnumUserContactMethodType = "WEBHOOK"
+	EnumUserContactMethodTypeNTFY    EnumUserContactMethodType = "NTFY"
 	EnumUserContactMethodTypeSLACKDM EnumUserContactMethodType = "SLACK_DM"
 )
 

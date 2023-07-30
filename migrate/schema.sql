@@ -245,6 +245,7 @@ CREATE TYPE public.enum_user_contact_method_type AS ENUM (
     'VOICE',
     'SMS',
     'WEBHOOK',
+    'NTFY',
     'SLACK_DM'
 );
 

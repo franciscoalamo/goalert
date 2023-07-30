@@ -1,12 +1,11 @@
 package ntfy
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/target/goalert/config"
@@ -15,69 +14,26 @@ import (
 
 type Sender struct{}
 
-// POSTDataAlert represents fields in outgoing alert notification.
-type POSTDataAlert struct {
-	AppName string
-	Type    string
-	AlertID int
-	Summary string
-	Details string
+type NTFYEnumActionType string
+const (
+	NTFYEnumActionTypeView NTFYEnumActionType = "view"
+	NTFYEnumActionTypeBroadcast NTFYEnumActionType = "broadcast"
+	NTFYEnumActionTypeHttp NTFYEnumActionType = "http"
+)
+
+type NTFYActionButton struct {
+	Type NTFYEnumActionType
+	Text string
+	Parameters []string
+	Clear bool
 }
 
-// POSTDataAlertBundle represents fields in outgoing alert bundle notification.
-type POSTDataAlertBundle struct {
-	AppName     string
-	Type        string
-	ServiceID   string
-	ServiceName string
-	Count       int
-}
-
-// POSTDataAlertStatus represents fields in outgoing alert status notification.
-type POSTDataAlertStatus struct {
-	AppName  string
-	Type     string
-	AlertID  int
-	LogEntry string
-}
-
-// POSTDataAlertStatusBundle represents fields in outgoing alert status bundle notification.
-type POSTDataAlertStatusBundle struct {
-	AppName  string
-	Type     string
-	AlertID  int
-	LogEntry string
-	Count    int
-}
-
-// POSTDataVerification represents fields in outgoing verification notification.
-type POSTDataVerification struct {
-	AppName string
-	Type    string
-	Code    string
-}
-
-// POSTDataOnCallUser represents User fields in outgoing on call notification.
-type POSTDataOnCallUser struct {
-	ID   string
-	Name string
-	URL  string
-}
-
-// POSTDataOnCallNotification represents fields in outgoing on call notification.
-type POSTDataOnCallNotification struct {
-	AppName      string
-	Type         string
-	Users        []POSTDataOnCallUser
-	ScheduleID   string
-	ScheduleName string
-	ScheduleURL  string
-}
-
-// POSTDataTest represents fields in outgoing test notification.
-type POSTDataTest struct {
-	AppName string
-	Type    string
+type NTFYBaseData struct {
+	Title string
+	Priority string
+	Tags []string
+	Message string
+	Click string
 }
 
 func NewSender(ctx context.Context) *Sender {
@@ -87,83 +43,77 @@ func NewSender(ctx context.Context) *Sender {
 // Send will send an alert for the provided message type
 func (s *Sender) Send(ctx context.Context, msg notification.Message) (*notification.SentMessage, error) {
 	cfg := config.FromContext(ctx)
-	var payload interface{}
+	baseUrl := cfg.NTFY.BaseURL
+	var payload NTFYBaseData
 	switch m := msg.(type) {
 	case notification.Test:
-		payload = POSTDataTest{
-			AppName: cfg.ApplicationName(),
-			Type:    "Test",
+		payload = NTFYBaseData{
+			Title: "Test Notification",
+			Priority: "default",
+			Tags: []string{"toolbox"},
+			Message: "This is a test notification from GoAlert.",
+			Click: cfg.CallbackURL("/"),
 		}
 	case notification.Verification:
-		payload = POSTDataVerification{
-			AppName: cfg.ApplicationName(),
-			Type:    "Verification",
-			Code:    strconv.Itoa(m.Code),
+		payload = NTFYBaseData{
+			Title: "Verification",
+			Priority: "default",
+			Tags: []string{"computer"},
+			Message: "Your verification code is " + strconv.Itoa(m.Code) + ".",
+			Click: cfg.CallbackURL("/verify"),
 		}
 	case notification.Alert:
-		payload = POSTDataAlert{
-			AppName: cfg.ApplicationName(),
-			Type:    "Alert",
-			Details: m.Details,
-			AlertID: m.AlertID,
-			Summary: m.Summary,
+		payload = NTFYBaseData{
+			Title: m.Summary,
+			Priority: "urgent",
+			Tags: []string{"rotating_light"},
+			Message: m.Details,
+			Click: cfg.CallbackURL("/alerts/" + strconv.Itoa(m.AlertID)),
 		}
 	case notification.AlertBundle:
-		payload = POSTDataAlertBundle{
-			AppName:     cfg.ApplicationName(),
-			Type:        "AlertBundle",
-			ServiceID:   m.ServiceID,
-			ServiceName: m.ServiceName,
-			Count:       m.Count,
+		payload = NTFYBaseData{
+			Title: m.ServiceName,
+			Priority: "urgent",
+			Tags: []string{"rotating_light"},
+			Message: m.ServiceName + "\n" + strconv.Itoa(m.Count) + " alerts",
+			Click: cfg.CallbackURL("/services/" + m.ServiceID + "/alerts"),
 		}
 	case notification.AlertStatus:
-		payload = POSTDataAlertStatus{
-			AppName:  cfg.ApplicationName(),
-			Type:     "AlertStatus",
-			AlertID:  m.AlertID,
-			LogEntry: m.LogEntry,
+		payload = NTFYBaseData{
+			Title: "Alert Status: " + strconv.Itoa(m.AlertID),
+			Priority: "default",
+			Tags: []string{"page_with_curl"},
+			Message: "Alert Status: " + strconv.Itoa(m.AlertID) + "\n" + m.LogEntry,
+			Click: cfg.CallbackURL("/alerts/" + strconv.Itoa(m.AlertID)),
 		}
 	case notification.ScheduleOnCallUsers:
-		// We use types defined in this package to insulate against unintended API
-		// changes.
-		users := make([]POSTDataOnCallUser, len(m.Users))
+		users := make([]string, len(m.Users))
 		for i, u := range m.Users {
-			users[i] = POSTDataOnCallUser(u)
+			users[i] = u.Name
 		}
-		payload = POSTDataOnCallNotification{
-			AppName:      cfg.ApplicationName(),
-			Type:         "ScheduleOnCallUsers",
-			Users:        users,
-			ScheduleID:   m.ScheduleID,
-			ScheduleName: m.ScheduleName,
-			ScheduleURL:  m.ScheduleURL,
+		payload = NTFYBaseData{
+			Title: "On Call: " + m.ScheduleName,
+			Priority: "default",
+			Tags: []string{"calendar"},
+			Message: "On Call: " + m.ScheduleName + "\n" + "Users on call: " + strings.Join(users, ",") + "\n" + m.ScheduleURL,
+			Click: cfg.CallbackURL("/schedules/" + m.ScheduleID),
 		}
 	default:
 		return nil, fmt.Errorf("message type '%s' not supported", m.Type().String())
 	}
 
-	data, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
 	ctx, cancel := context.WithTimeout(ctx, time.Second*3)
 	defer cancel()
 
-	if !cfg.ValidWebhookURL(msg.Destination().Value) {
-		// fail permanently if the URL is not currently valid/allowed
-		return &notification.SentMessage{
-			State:        notification.StateFailedPerm,
-			StateDetails: "invalid or not allowed URL",
-		}, nil
-	}
-
-	req, err := http.NewRequestWithContext(ctx, "POST", msg.Destination().Value, bytes.NewReader(data))
+	req, err := http.NewRequestWithContext(ctx, "POST", baseUrl + "/" + msg.Destination().Value, strings.NewReader(payload.Message))
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Add("Content-Type", "application/json")
+	req.Header.Set("Title", payload.Title)
+	req.Header.Set("Priority", payload.Priority)
+	req.Header.Set("Tags", strings.Join(payload.Tags, ","))
+	req.Header.Set("Click", payload.Click)
 
 	_, err = http.DefaultClient.Do(req)
 	if err != nil {

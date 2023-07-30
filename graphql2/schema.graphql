@@ -1359,6 +1359,7 @@ enum ContactMethodType {
   VOICE
   EMAIL
   WEBHOOK
+  NTFY
   SLACK_DM
 }
 

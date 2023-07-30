@@ -77,6 +77,21 @@ function renderURLField(edit: boolean): JSX.Element {
   )
 }
 
+function renderNTFYTopicField(edit: boolean): JSX.Element {
+  return (
+    <FormField
+      placeholder='topic'
+      fullWidth
+      name='value'
+      required
+      label='NTFY Topic'
+      type='text'
+      component={TextField}
+      disabled={edit}
+    />
+  )
+}
+
 function renderSlackField(edit: boolean): JSX.Element {
   return (
     <FormField
@@ -102,6 +117,8 @@ function renderTypeField(type: ContactMethodType, edit: boolean): JSX.Element {
       return renderEmailField(edit)
     case 'WEBHOOK':
       return renderURLField(edit)
+    case 'NTFY':
+      return renderNTFYTopicField(edit)
     case 'SLACK_DM':
       return renderSlackField(edit)
     default:
@@ -132,12 +149,14 @@ export default function UserContactMethodForm(
     smsVoiceEnabled,
     emailEnabled,
     webhookEnabled,
+    ntfyEnabled,
     slackEnabled,
     disclaimer,
   ] = useConfigValue(
     'Twilio.Enable',
     'SMTP.Enable',
     'Webhook.Enable',
+    'NTFY.Enable',
     'Slack.Enable',
     'General.NotificationDisclaimer',
   )
@@ -169,6 +188,11 @@ export default function UserContactMethodForm(
           value: 'WEBHOOK',
           disabledMessage: 'Webhooks must be enabled by an administrator',
           disabled: !webhookEnabled,
+        },
+        {
+          value: 'NTFY',
+          disabledMessage: 'NTFY must be enabled by an administrator',
+          disabled: !ntfyEnabled,
         },
         {
           value: 'SLACK_DM',

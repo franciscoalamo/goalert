@@ -336,6 +336,8 @@ func (s *Store) logEntry(ctx context.Context, tx *sql.Tx, _type Type, meta inter
 				r.subject.classifier = "Email"
 			case gadb.EnumUserContactMethodTypeWEBHOOK:
 				r.subject.classifier = "Webhook"
+			case gadb.EnumUserContactMethodTypeNTFY:
+				r.subject.classifier = "NTFY"
 			case gadb.EnumUserContactMethodTypeSLACKDM:
 				r.subject.classifier = "Slack"
 			}
@@ -358,6 +360,8 @@ func (s *Store) logEntry(ctx context.Context, tx *sql.Tx, _type Type, meta inter
 				fallthrough
 			case notification.DestTypeUserWebhook:
 				r.subject.classifier = "Webhook"
+			case notification.DestTypeNTFY:
+				r.subject.classifier = "NTFY"
 			case notification.DestTypeSlackChannel:
 				r.subject.classifier = "Slack"
 			}
